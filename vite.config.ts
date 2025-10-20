@@ -1,0 +1,34 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import dts from 'vite-plugin-dts'
+import libCss from 'vite-plugin-libcss'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    libCss(),
+    dts({
+      entryRoot: './packages',
+      outDir: 'dist/types',
+      include: ['packages/**/*'],
+    }),
+  ],
+  build: {
+    lib: {
+      entry: path.resolve(__dirname, 'packages/index.ts'),
+      name: 'ZephyrUI',
+      fileName: (format) => `zephyr-ui.${format}.js`,
+      formats: ['es', 'umd']
+    },
+    rollupOptions: {
+      external: ['vue'],
+      output: {
+        globals: {
+          vue: 'Vue'
+        }
+      }
+    },
+    cssCodeSplit: true,
+  }
+})
