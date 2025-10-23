@@ -22,10 +22,15 @@ export default defineConfig({
       formats: ['es', 'umd']
     },
     rollupOptions: {
-      external: ['vue'],
+      external: [
+        'vue',
+        'monaco-editor-core',
+        'shiki',
+        '@shikijs/monaco'
+      ],
       output: {
         globals: {
-          vue: 'Vue'
+          vue: 'Vue',
         }
       }
     },
