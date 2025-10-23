@@ -48,7 +48,7 @@ const registerCompletionItemProvider = (languageSelector: monaco.languages.Langu
 
 onMounted(async () => {
   if (!monacoEditorRef.value) return
-  if (!highlighter) highlighter = new Highlighter
+  if (!highlighter) highlighter = new Highlighter()
   try {
     await highlighter.init()
     const highlighterInstance = highlighter.getHighlighter()
