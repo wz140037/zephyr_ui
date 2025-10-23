@@ -1,9 +1,10 @@
 import type { App } from 'vue'
 import ZzButton from './button'
+import ZephyrEditor from './editor'
 
-const components = [ZzButton]
+const components = [ZzButton, ZephyrEditor]
 
-export { ZzButton }
+export { ZzButton, ZephyrEditor }
 
 export default {
   install(app: App) {
