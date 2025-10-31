@@ -1,52 +1,45 @@
+<!--
+ * new page
+ * @author: wzzz
+ * @since: 2025-10-31
+ * App.vue
+-->
 <script setup lang="ts">
-import * as monaco from 'monaco-editor-core'
-import { ref } from 'vue';
-
-// ZephyrEditor====Demo
-const code = ref('import { ref } from "vue";\n\nconst count = ref(0);\n\nfunction increment() {\n  count.value++;\n}')
-
-const options: monaco.editor.IStandaloneEditorConstructionOptions = {
-  language: 'javascript',
-  theme: 'github-dark',
-  automaticLayout: true,
-  scrollBeyondLastLine: false,
-  minimap: { // 关闭小地图
-    enabled: false,
-  },
-  fontSize: 14,
-  wordWrap: 'off', // 自动换行
-}
-
-const options2: monaco.editor.IStandaloneEditorConstructionOptions = {
-  language: 'javascript',
-  theme: 'github-light',
-  automaticLayout: true,
-  scrollBeyondLastLine: false,
-  minimap: { // 关闭小地图
-    enabled: false,
-  },
-  fontSize: 14,
-  wordWrap: 'off', // 自动换行
-}
+import { ElScrollbar } from 'element-plus'
 
 </script>
 
 <template>
-  <div class="box">
-    <div class="container">
-      <ZephyrEditor v-model="code" :options="options"></ZephyrEditor>
-    </div>
-    <div class="container">
-      <ZephyrEditor v-model="code" :options="options2"></ZephyrEditor>
-    </div>
+  <div class="container">
+    <ZephyrWrapper :is="ElScrollbar" :show="true">
+      <p v-for="item in 20" :key="item" class="scrollbar-demo-item">{{ item }}</p>
+    </ZephyrWrapper>
   </div>
-
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .container {
-  width: 50vw;
   height: 50vh;
-  /* 居中 */
+  width: 50vw;
+  background-color: #f0f0f0;
+  margin: 0 auto;
+  overflow: hidden;
+
+  .demo-x {
+    height: 100vh;
+    background-color: red;
+  }
+
+  .scrollbar-demo-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    margin: 10px;
+    text-align: center;
+    border-radius: 4px;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+  }
 }
 </style>
