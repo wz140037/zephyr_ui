@@ -6,12 +6,20 @@
 -->
 <script setup lang="ts">
 import { ElScrollbar } from 'element-plus'
+import { h } from 'vue';
+
+// const is = ElScrollbar
+const isProps = {
+  height: '100px'
+}
+// const is ={ name: 'zzz' }
+const is = h(ElScrollbar, { height: '300px' })
 
 </script>
 
 <template>
   <div class="container">
-    <ZephyrWrapper :is="ElScrollbar" :show="true">
+    <ZephyrWrapper :is="is" :show="true">
       <p v-for="item in 20" :key="item" class="scrollbar-demo-item">{{ item }}</p>
     </ZephyrWrapper>
   </div>

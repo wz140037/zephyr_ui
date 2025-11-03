@@ -5,11 +5,12 @@ export default {
 </script>
 
 <script setup lang="ts">
-import { computed, isVNode } from 'vue'
+import { computed, isVNode, ref } from 'vue'
 
 export interface ZephyrWrapperProps {
   is?: any         // 可以是字符串、组件、VNode、或函数返回VNode
   show?: boolean   // 是否包裹
+  isProps?: any    // 外层组件的props
 }
 
 const props = defineProps<ZephyrWrapperProps>()
@@ -45,29 +46,36 @@ const wrapperType = computed(() => {
  */
 const wrapperProps = computed(() => {
   const target = props.is
-  if (!target) return {}
-
-  if (isVNode(target)) return target.props ?? {}
-
+  const componentProps = props.isProps ?? {}
+  if (!target) return componentProps
+  if (isVNode(target)) return {
+    ...target.props,
+    ...componentProps
+  }
   if (typeof target === 'function') {
     const vnode = target()
-    return isVNode(vnode) ? vnode.props ?? {} : {}
+    return isVNode(vnode) ? {
+      ...vnode.props,
+      ...componentProps
+    } : componentProps
   }
-
-  return {}
+  return componentProps
 })
+
+// 是否使用默认插槽
+const isUseDefault = ref(true)
+const setDefault = () => {
+  isUseDefault.value = false
+}
+
 </script>
 
 <template>
-  <component
-    v-if="show && wrapperType"
-    :is="wrapperType"
-    v-bind="wrapperProps"
-  >
+  <component v-if="wrapperType && show" :is="wrapperType" v-bind="wrapperProps">
+    {{ setDefault() }}
     <slot />
   </component>
-
-  <slot v-else />
+  <slot v-if="isUseDefault" />
 </template>
 
 <style scoped lang="scss"></style>
