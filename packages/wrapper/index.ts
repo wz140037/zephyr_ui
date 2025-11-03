@@ -1,8 +1,8 @@
 import type { App } from 'vue'
-import ZephyrWrapper from './ZephyrWrapper.vue'
+import ZephyrWrapper from './index.vue'
 
 ZephyrWrapper.install = (app: App) => {
-  app.component('ZzButton', ZephyrWrapper)
+  app.component('ZephyrWrapper', ZephyrWrapper)
 }
 
 export default ZephyrWrapper

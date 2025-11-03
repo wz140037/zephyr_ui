@@ -5,7 +5,7 @@
  * App.vue
 -->
 <script setup lang="ts">
-import { ElScrollbar } from 'element-plus'
+import { ElScrollbar, ElTooltip, ElButton } from 'element-plus'
 import { h } from 'vue';
 
 // const is = ElScrollbar
@@ -13,14 +13,15 @@ const isProps = {
   height: '100px'
 }
 // const is ={ name: 'zzz' }
-const is = h(ElScrollbar, { height: '300px' })
+// const is = h(ElScrollbar, { height: '300px' })
+const is = h(ElTooltip, { trigger: 'click' }, { default: () => h(ElButton, '我是按钮'), content: () => h('div', 'content2222') })
 
 </script>
 
 <template>
   <div class="container">
     <ZephyrWrapper :is="is" :show="true">
-      <p v-for="item in 20" :key="item" class="scrollbar-demo-item">{{ item }}</p>
+      <ElButton>我是按钮</ElButton>
     </ZephyrWrapper>
   </div>
 </template>
