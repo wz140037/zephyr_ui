@@ -1,9 +1,3 @@
-<!-- index.vue -->
-<!--
- * new page
- * @author: wzzz
- * @since: 2025-11-03
--->
 <script lang="ts">
 export default {
   name: "ZephyrWrapper",
@@ -11,7 +5,9 @@ export default {
 </script>
 <script setup lang="ts">
 import WrapperVue from './helper'
-import { computed, nextTick, onMounted, ref } from 'vue'
+
+import { useElementSize } from '@vueuse/core'
+import { ref } from 'vue'
 
 const props = defineProps({
   is: { type: [String, Object, Function], default: null },
@@ -20,24 +16,21 @@ const props = defineProps({
 })
 
 const wrapperRef = ref()
-const hiddenComponent = ref(false)
-const isUseDefault = computed(() => {
-  console.log('cccc', Object.keys(wrapperRef.value ?? {}));
-  return Object.keys(wrapperRef.value ?? {}).length === 0
-})
-
-onMounted(()=>{
-  nextTick(()=>{
-    hiddenComponent.value = true
-  })
-})
+const { height } = useElementSize(wrapperRef)
 
 </script>
 
 <template>
-  <component v-if="show && !hiddenComponent" ref="wrapperRef" :is="is"></component>
-  <WrapperVue v-if="hiddenComponent" v-bind="$attrs" />
-  <slot v-if="isUseDefault"></slot>
+  <div class="zephyr-ui_wrapper">
+    <div class="zephyr-wrapper_container" ref="wrapperRef">
+      <WrapperVue v-bind="props">
+        <template #[slotK] v-for="(slotK, _) in Object.keys($slots)" :key="slotK">
+          <slot :name="slotK"></slot>
+        </template>
+      </WrapperVue>
+    </div>
+    <slot v-if="!height"></slot>
+  </div>
 </template>
 
 <style scoped lang="scss"></style>

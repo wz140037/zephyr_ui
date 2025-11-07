@@ -11,7 +11,6 @@ export default defineComponent({
   setup(props, { slots }) {
     return () => {
       const { is, show, isProps } = props
-      console.log('helper', is, show, isProps);
       if (!show) return null
 
       // 没传组件，直接渲染默认插槽

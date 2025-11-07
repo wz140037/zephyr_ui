@@ -14,15 +14,24 @@ const isProps = {
 }
 // const is ={ name: 'zzz' }
 // const is = h(ElScrollbar, { height: '300px' })
-const is = h(ElTooltip, { trigger: 'click' }, { default: () => h(ElButton, '我是按钮'), content: () => h('div', 'content2222') })
+const is = h(ElTooltip, { trigger: 'click' }, {
+  default: () => h(ElButton, '我是按钮'),
+  content: () => h('div', 'content2222')
+})
 
 </script>
 
 <template>
   <div class="container">
-    <ZephyrWrapper :is="is" :show="true">
-      <ElButton>我是按钮</ElButton>
-    </ZephyrWrapper>
+    <ZephyrWrapper :is="is" :show="true"></ZephyrWrapper>
+    <!-- <ZephyrWrapper :is="ElTooltip" :show="true">
+      <template #default>
+        <ElButton>我是按钮</ElButton>
+      </template>
+      <template #content>
+        <div>content2222</div>
+      </template>
+    </ZephyrWrapper> -->
   </div>
 </template>
 
