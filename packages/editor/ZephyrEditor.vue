@@ -29,16 +29,11 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['update:modelValue'])
+const emits = defineEmits(['update:modelValue', 'load'])
 // 高亮器
 let highlighter: Highlighter | null = null
 const monacoEditorRef = ref<HTMLDivElement | null>(null)
 let monacoEditor: monaco.editor.IStandaloneCodeEditor | null = null
-
-// 获取当前value
-const getText = () => {
-  return monacoEditor?.getValue() || ''
-}
 
 // 注册提示词
 const registerCompletionItemProvider = (languageSelector: monaco.languages.LanguageSelector, provider: monaco.languages.CompletionItemProvider) => {
@@ -46,9 +41,27 @@ const registerCompletionItemProvider = (languageSelector: monaco.languages.Langu
   monaco.languages.registerCompletionItemProvider(languageSelector, provider)
 }
 
+// 切换主题
+const changeTheme = (theme: BundledTheme) => {
+  if (!highlighter) return
+  return highlighter.registerTheme(theme).then(() => {
+    monaco.editor.setTheme(theme)
+  }).catch(err => {
+    console.error(err)
+  })
+}
+
+// 注册语言
+const registerLanguage = (language: BundledLanguage) => {
+  if (!highlighter) return
+  return highlighter.registerLanguage(language).then(()=>{
+    monaco.languages.register(language as any)
+  })
+}
+
 onMounted(async () => {
   if (!monacoEditorRef.value) return
-  if (!highlighter) highlighter = new Highlighter()
+  highlighter = new Highlighter()
   try {
     await highlighter.init()
     const highlighterInstance = highlighter.getHighlighter()
@@ -60,6 +73,7 @@ onMounted(async () => {
     }
     if (props.options?.theme) {
       await highlighter.registerTheme(props.options?.theme as BundledTheme)
+      monaco.editor.setTheme(props.options?.theme as BundledTheme)
     }
 
     // 注册 Shiki 主题，并为 Monaco 提供语法高亮
@@ -73,8 +87,10 @@ onMounted(async () => {
     monacoEditor.onDidChangeModelContent(() => {
       emits('update:modelValue', monacoEditor?.getValue())
     })
+    emits('load', { state: 'success', editor: monacoEditor, highlighter, highlighterInstance })
   } catch (error) {
     console.log('editor is init failed', error);
+    emits('load', { state: 'error', error })
   }
 })
 
@@ -83,14 +99,12 @@ onUnmounted(() => {
 })
 
 defineExpose({
-  // 获取编辑器内容
-  getText,
-  // 获取当前实例
-  getEditor: () => monacoEditor,
   // 注册提示词
   registerCompletionItemProvider,
-  // 获取高亮器
-  getHighlighter: () => highlighter
+  // 注册/切换主题
+  changeTheme,
+  // 注册语言
+  registerLanguage,
 })
 
 </script>

@@ -8,6 +8,7 @@
     "outDir": "./dist/es",
     "strict": true,
     "jsx": "preserve",
+    "jsxImportSource": "vue",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,

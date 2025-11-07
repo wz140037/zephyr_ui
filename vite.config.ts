@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 import dts from 'vite-plugin-dts'
 import libCss from 'vite-plugin-libcss'
 import path from 'path'
@@ -7,6 +8,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     vue(),
+    vueJsx(),
     libCss(),
     dts({
       entryRoot: './packages',
@@ -22,10 +24,15 @@ export default defineConfig({
       formats: ['es', 'umd']
     },
     rollupOptions: {
-      external: ['vue'],
+      external: [
+        'vue',
+        'monaco-editor-core',
+        'shiki',
+        '@shikijs/monaco'
+      ],
       output: {
         globals: {
-          vue: 'Vue'
+          vue: 'Vue',
         }
       }
     },
