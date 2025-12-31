@@ -6,7 +6,6 @@ import ZephyrAudioConverter from '../packages/audio'
 
 <template>
   <div style="padding: 40px">
-    <h2>ZephyrAudioConverter 测试</h2>
     <ZephyrAudioConverter />
   </div>
 </template>
