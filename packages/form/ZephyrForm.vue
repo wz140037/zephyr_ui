@@ -1,118 +1,123 @@
 <template>
-  <div class="policy-filter-bar">
-    <a-form ref="formRef" :model="innerModel" :layout="layout"
-      :class="{ 'is-single-item': normalizedItems.length === 1 }">
-      <template v-for="item in normalizedItems" :key="item.prop">
-        <a-form-item v-if="!item.hidden">
-          <div class="policy-filter-node" :class="{
-            'is-vertical': layout === 'vertical',
-            'is-required': item.required
-          }">
-            <div class="filter-node-title" @click.stop="$emit('itemClick', item.raw)">
-              {{ item.label }}
-            </div>
-
-            <div class="node-is_box">
-              <div class="filter-node-content">
-                <template v-for="node in item.nodes" :key="node.prop">
-                  <div v-if="!node.hidden" class="filter-node-item" :class="{ 'children-node': item.hasChildren }"
-                    :style="node.style">
-                    <a-form-item :name="node.prop" :rules="node.rules">
-                      <component :is="node.is" v-bind="node.attr" :ref="(el: any) => setInstance(node.prop, el)"
-                        :[node.model.valueField]="innerModel[node.prop]"
-                        @[node.model.eventField]="(val: any) => (innerModel[node.prop] = val)" />
-                    </a-form-item>
-                  </div>
-                </template>
-              </div>
-            </div>
+  <form class="zephyr-form" v-bind="virtual ? containerProps : {}">
+    <div v-bind="virtual ? wrapperProps : {}">
+      <template v-for="item in virtual ? virtualList : visibleItems" :key="virtual ? item.data.key : item.key">
+        <div class="form-node_container" :class="{
+          'is-required': virtual ? item.data.required : item.required,
+          'is-vertical': layout === 'vertical'
+        }">
+          <div v-if="virtual ? item.data.label : item.label" class="form-node_label">
+            {{ virtual ? item.data.label : item.label }}
           </div>
-        </a-form-item>
-      </template>
 
-      <!-- 按钮 -->
-      <a-form-item v-if="showButtons" class="filter-bar_btns">
-        <a-button type="primary" @click="onSearch">搜索</a-button>
-        <a-button style="margin-left: 8px" @click="onReset">重置</a-button>
-      </a-form-item>
-    </a-form>
-  </div>
+          <div class="form-node_content">
+            <template v-for="node in virtual ? item.data.nodes : item.nodes" :key="node.key">
+              <ZephyrFormItem v-if="!node.hidden" :prop="node.prop" :rules="node.rules" :style="node.style">
+                <component :is="node.is" v-bind="node.attr" :ref="(el: any) => (formInstances[node.prop] = el)"
+                  v-model="innerModel[node.prop]" />
+              </ZephyrFormItem>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, watch } from 'vue'
+import ZephyrFormItem from './ZephyrFormItem.vue'
+import {
+  provide,
+  reactive,
+  ref,
+  computed,
+  watch,
+  toRaw
+} from 'vue'
+import { useVirtualList } from '@vueuse/core'
 import type { PropType } from 'vue'
-import type { ZephyrFormItem } from './types'
+import type { ZephyrFormSchema } from './types'
 
 /* ---------------- props ---------------- */
 const props = defineProps({
   formItems: {
-    type: Array as PropType<ZephyrFormItem[]>,
+    type: Array as PropType<ZephyrFormSchema[]>,
     required: true
-  },
-  modules: {
-    type: Array as PropType<'button'[]>,
-    default: () => ['button']
   },
   layout: {
     type: String as PropType<'horizontal' | 'vertical'>,
-    default: 'horizontal'
-  }
+    default: 'vertical'
+  },
+  virtual: {
+    type: Boolean,
+    default: false
+  },
 })
 
-/* ---------------- emits ---------------- */
-
-const emit = defineEmits<{
-  (e: 'search', value: Record<string, any>): void
-  (e: 'reset', value: Record<string, any>): void
-  (e: 'itemClick', value: ZephyrFormItem): void
-}>()
-
 /* ---------------- refs ---------------- */
-
-const formRef = ref()
 const formInstances = ref<Record<string, any>>({})
 const innerModel = reactive<Record<string, any>>({})
 
-/* ---------------- 结构规范化 ---------------- */
+/* ---------------- provide ---------------- */
+
+const fields: any[] = []
+
+function addField(field: any) {
+  fields.push(field)
+}
+
+function removeField(field: any) {
+  const index = fields.indexOf(field)
+  if (index !== -1) fields.splice(index, 1)
+}
+
+async function validate() {
+  const results = await Promise.all(fields.map(f => f.validate()))
+  return results.every(Boolean)
+}
+
+provide('ZephyrForm', {
+  model: innerModel,
+  addField,
+  removeField
+})
+
+/* ---------------- 规范化 ---------------- */
 
 const normalizedItems = computed(() => {
-  return props.formItems.map(item => {
-    const nodes = item.children?.length
-      ? item.children
-      : [item]
+  const model = innerModel
 
-    const parsedNodes = nodes.map(node => {
-      const attr =
+  return props.formItems.map((item, index) => {
+    const nodes = item.children?.length ? item.children : [item]
+
+    const parsedNodes = nodes.map((node, nodeIndex) => {
+      const rawAttr =
         typeof node.attr === 'function'
-          ? node.attr(innerModel)
+          ? node.attr(model)
           : node.attr ?? {}
 
+      const attr = { ...rawAttr }
       const rules = attr.rules ?? []
-      const model = {
-        valueField: attr.model?.valueField ?? 'value',
-        eventField: attr.model?.eventField ?? 'update:value'
-      }
 
       return {
         ...node,
+        key: node.prop || `node_${index}_${nodeIndex}`,
         attr,
         rules,
-        model,
         hidden: attr.hidden === true,
-        style: attr.style
-      } as Record<string, any>
+        style: attr.style ?? { width: '100%' }
+      }
     })
 
+    const rawItemAttr =
+      typeof item.attr === 'function'
+        ? item.attr(model)
+        : item.attr ?? {}
+
     return {
-      raw: item,
-      prop: item.prop,
-      label: item.label,
-      hasChildren: !!item.children?.length,
-      hidden:
-        (typeof item.attr === 'function'
-          ? item.attr(innerModel)
-          : item.attr)?.hidden === true,
+      ...item,
+      key: item.prop || `item_${index}`,
+      hidden: rawItemAttr?.hidden === true,
       required: parsedNodes.some(n =>
         n.rules?.some((r: any) => r.required)
       ),
@@ -121,26 +126,38 @@ const normalizedItems = computed(() => {
   })
 })
 
-/* ---------------- 工具方法 ---------------- */
-
-const showButtons = computed(() =>
-  props.modules.includes('button')
+/* ---------------- 过滤 hidden ---------------- */
+const visibleItems = computed(() =>
+  normalizedItems.value.filter(i => !i.hidden)
 )
 
-const setInstance = (prop: string, el: any) => {
-  el
-    ? (formInstances.value[prop] = el)
-    : delete formInstances.value[prop]
-}
+/* ---------------- 虚拟滚动层 ---------------- */
 
-/* ---------------- model 初始化 ---------------- */
+/**
+ * 内部固定逻辑高度（不对外暴露）
+ * 只是用于滚动计算
+ */
+const INTERNAL_ITEM_HEIGHT = 72
+const {
+  list: virtualList,
+  containerProps,
+  wrapperProps
+}: any = useVirtualList(visibleItems, {
+  itemHeight: INTERNAL_ITEM_HEIGHT,
+  overscan: 2
+})
+
+/* ---------------- 初始化 model ---------------- */
 
 function initModel() {
   const newModel: Record<string, any> = {}
 
-  normalizedItems.value.forEach(item => {
-    item.nodes.forEach(node => {
-      newModel[node.prop] = node.defaultValue
+  props.formItems.forEach(item => {
+    const nodes = item.children?.length ? item.children : [item]
+    nodes.forEach(node => {
+      if (node.prop && !(node.prop in newModel)) {
+        newModel[node.prop] = node.defaultValue ?? undefined
+      }
     })
   })
 
@@ -151,19 +168,10 @@ function initModel() {
 watch(
   () => props.formItems,
   () => initModel(),
-  { deep: true, immediate: true }
+  { immediate: true }
 )
 
-/* ---------------- 业务方法 ---------------- */
-
-function onSearch() {
-  emit('search', { ...innerModel })
-}
-
-function onReset() {
-  initModel()
-  emit('reset', { ...innerModel })
-}
+/* ---------------- 对外方法 ---------------- */
 
 function setDefaultValues(values: Record<string, any>) {
   Object.assign(innerModel, values)
@@ -171,12 +179,11 @@ function setDefaultValues(values: Record<string, any>) {
 
 async function getValues({ required } = { required: false }) {
   if (required) {
-    await formRef.value.validate()
+    const valid = await validate()
+    if (!valid) return Promise.reject('表单校验失败')
   }
-  return { ...innerModel }
+  return { ...toRaw(innerModel) }
 }
-
-/* ---------------- expose ---------------- */
 
 defineExpose({
   setDefaultValues,
@@ -186,95 +193,68 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-.policy-filter-bar {
+.zephyr-form {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
   padding: 10px 20px 16px;
   background-color: #fff;
   border-radius: 4px;
+  overflow: auto;
 
-  .policy-filter-node+.policy-filter-node {
+  .form-node_container+.form-node_container {
     margin-top: 10px;
   }
 
-  .filter-bar_btns {
-    margin-top: 20px;
-  }
-
-  .policy-filter-node {
+  .form-node_container {
     position: relative;
     display: flex;
     align-items: start;
 
-    .filter-node-title {
+    .form-node_label {
       color: #293358;
       margin-right: 6px;
-      font-feature-settings: "liga" off, "clig" off;
-      font-family: Alibaba PuHuiTi;
       font-size: 14px;
       font-weight: 500;
       white-space: nowrap;
-    }
-
-    .node-is_box {
-      display: flex;
-      width: 100%;
     }
 
     &.is-vertical {
       flex-direction: column;
       align-items: flex-start;
 
-      .filter-node-title {
-        margin-bottom: 8px;
+      .form-node_label {
+        margin-bottom: 6px;
+      }
+
+      .form-node_content {
+        width: 100%;
       }
     }
 
     &.is-required::before {
-      // 模拟必填星号
       position: absolute;
       content: '*';
       color: #CD4949;
     }
 
-    &.is-required .filter-node-title {
-      padding-left: 6px;
+    &.is-required .form-node_label {
+      padding-left: 10px;
     }
 
-    &.is-required:has(.ant-form-item-explain-error) {
-      .filter-node-title {
+    &.is-required:has(.form-error) {
+      .form-node_label {
         color: #CD4949;
       }
     }
   }
 
-  .ant-form-item {
-    margin-bottom: 10px !important;
-  }
-
-  .filter-bar_component {
-    width: 100%;
-  }
-}
-</style>
-<style lang="scss">
-.filter-node-content {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 12px;
-  row-gap: 10px;
-
-  .ant-form-item {
-    width: 100%;
-  }
-
-  // 限制tag宽度
-  .ant-form-item .ant-select-selection-item {
-    width: 10em !important;
-  }
-
-  // 隐藏提示
-  .ant-form-item-explain-error {
-    display: none;
+  .form-node_content {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    column-gap: 12px;
+    row-gap: 10px;
   }
 }
 </style>

@@ -1,11 +1,30 @@
 <script setup lang="ts">
-// 如果是本地调试，也可以相对路径：
-import ZephyrAudioConverter from '../packages/audio'
+import { onMounted, useTemplateRef } from 'vue';
+import { ZephyrForm } from '../packages/form'
+import { mockData } from './config/mock';
+
+const zephyrFormRef = useTemplateRef<InstanceType<typeof ZephyrForm>>('zephyrForm')
+
+onMounted(() => {
+  zephyrFormRef.value?.setDefaultValues({
+    // 是否感兴趣
+    isInterested: true,
+  })
+})
 
 </script>
 
 <template>
-  <div style="padding: 40px">
-    <ZephyrAudioConverter />
+  <div class="demo-container">
+    <ZephyrForm :virtual="true" ref="zephyrForm" :form-items="mockData" />
   </div>
 </template>
+<style scoped>
+.demo-container {
+  width: 400px;
+  height: 600px;
+  background-color: #f5f5f5;
+  margin: 10px auto;
+  padding: 10px;
+}
+</style>
