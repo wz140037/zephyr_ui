@@ -1,12 +1,15 @@
-import type { App } from 'vue'
 import ZzButton from './button'
 import ZephyrEditor from './editor'
 import ZephyrWrapper from './wrapper'
-import ZephyrAudioConverter from './audio/index'
+import ZephyrAudioConverter from './audio'
+import { ZephyrForm, ZephyrFormItem } from './form'
+import type { App } from 'vue'
 
-const components = [ZzButton, ZephyrEditor, ZephyrWrapper, ZephyrAudioConverter]
+const components = [ZzButton, ZephyrEditor, ZephyrWrapper, ZephyrAudioConverter
+  , ZephyrForm, ZephyrFormItem
+]
 
-export { ZzButton, ZephyrEditor, ZephyrWrapper, ZephyrAudioConverter }
+export { ZzButton, ZephyrEditor, ZephyrWrapper, ZephyrAudioConverter, ZephyrForm }
 
 export default {
   install(app: App) {
