@@ -17,35 +17,39 @@ if (!form) {
 }
 
 const errorMessage = ref('')
-const validate = async (trigger?: string) => {
+const isError = ref(false)
+async function validate(trigger?: string) {
+  if (!props.rules?.length) return true
   if (!props.prop) return true
+  // 根据 trigger 过滤规则
+  const filteredRules = props.rules.filter(rule => {
+    if (!rule.trigger) return true
+    if (!trigger) return true
 
-  let rules = props.rules
-  if (!rules?.length) return true
+    if (Array.isArray(rule.trigger)) {
+      return rule.trigger.includes(trigger)
+    }
 
-  if (trigger) {
-    rules = rules.filter((r: any) => {
-      if (!r.trigger) return true
-      return Array.isArray(r.trigger)
-        ? r.trigger.includes(trigger)
-        : r.trigger === trigger
-    })
-  }
+    return rule.trigger === trigger
+  })
 
-  if (!rules.length) return true
+  if (!filteredRules.length) return true
 
   const validator = new Schema({
-    [props.prop]: rules
+    [props.prop]: filteredRules
   })
 
   try {
     await validator.validate({
-      [props.prop]: form.model[props.prop]
+      [props.prop]: form?.model[props.prop]
     })
+
+    isError.value = false
     errorMessage.value = ''
     return true
   } catch (err: any) {
-    errorMessage.value = err.errors?.[0]?.message || ''
+    isError.value = true
+    errorMessage.value = err.errors?.[0]?.message ?? '校验失败'
     return false
   }
 }
@@ -76,6 +80,14 @@ watch(
   () => validate('change')
 )
 
+defineExpose({
+  validate,
+  clearValidate() {
+    isError.value = false
+    errorMessage.value = ''
+  }
+})
+
 </script>
 
 <template>
@@ -86,3 +98,9 @@ watch(
     </div>
   </div>
 </template>
+<style lang="scss" scoped>
+.form-error {
+  color: #CD4949;
+  font-size: 12px;
+}
+</style>

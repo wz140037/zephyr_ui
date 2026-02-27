@@ -52,6 +52,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  rules: {
+    type: Object as PropType<Record<string, any[]>>,
+    default: () => ({})
+  }
 })
 
 /* ---------------- refs ---------------- */
@@ -82,8 +86,32 @@ provide('ZephyrForm', {
   removeField
 })
 
-/* ---------------- 规范化 ---------------- */
+/* ---------------- 处理规则trigger ---------------- */
+function extractTriggers(rules: any[]) {
+  const set = new Set<string>()
 
+  rules.forEach(rule => {
+    if (!rule.trigger) return
+
+    if (Array.isArray(rule.trigger)) {
+      rule.trigger.forEach((t: any) => set.add(t))
+    } else {
+      set.add(rule.trigger)
+    }
+  })
+
+  return Array.from(set)
+}
+
+/* ---------------- 触发验证 ---------------- */
+function handleTrigger(prop: string, trigger: string) {
+  const field = fields.find(f => f.prop === prop)
+  if (field) {
+    field.validate(trigger)
+  }
+}
+
+/* ---------------- 规范化 ---------------- */
 const normalizedItems = computed(() => {
   const model = innerModel
 
@@ -97,7 +125,30 @@ const normalizedItems = computed(() => {
           : node.attr ?? {}
 
       const attr = { ...rawAttr }
-      const rules = attr.rules ?? []
+      const formLevelRules = props.rules?.[node.prop] ?? []
+
+      const schemaRules = node.rules ?? []
+      const attrRules = rawAttr?.rules ?? []
+
+      const rules = [
+        ...(Array.isArray(formLevelRules) ? formLevelRules : [formLevelRules]),
+        ...(Array.isArray(schemaRules) ? schemaRules : [schemaRules]),
+        ...(Array.isArray(attrRules) ? attrRules : [attrRules])
+      ].filter(Boolean)
+
+      // 处理 trigger
+      const triggers = extractTriggers(rules)
+      triggers.forEach(event => {
+        const eventKey = 'on' + event.charAt(0).toUpperCase() + event.slice(1)
+        const userHandler = rawAttr?.[eventKey]
+
+        attr[eventKey] = (...args: any[]) => {
+          userHandler?.(...args)
+          handleTrigger(node.prop, event)
+        }
+      })
+      // 防止重复透传
+      delete attr.rules
 
       return {
         ...node,
@@ -242,7 +293,7 @@ defineExpose({
       padding-left: 10px;
     }
 
-    &.is-required:has(.form-error) {
+    &:has(.form-error) {
       .form-node_label {
         color: #CD4949;
       }

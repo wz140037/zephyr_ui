@@ -179,3 +179,50 @@ export const mockData: ZephyrFormSchema[] = [
   interestSwitch,
   contactGroup
 ]
+
+export const formRules = {
+  name: [
+    { required: true, message: '姓名为必填项（form级）', trigger: 'change' }
+  ],
+  age: [
+    { type: 'number', required: true, message: '年龄必须填写（form级）', trigger: 'change' }
+  ],
+  email: [
+    { type: 'email', message: '邮箱格式不正确（form级）', trigger: 'change' }
+  ]
+}
+
+export const formItems = [
+  {
+    prop: 'name',
+    label: '姓名',
+    is: markRaw(ElInput),
+    attr: {
+      placeholder: '请输入姓名',
+      // attr 级规则
+      rules: [
+        { min: 2, message: '姓名至少2个字（attr级）', trigger: 'change' }
+      ]
+    }
+  },
+  {
+    prop: 'age',
+    label: '年龄',
+    is: markRaw(ElInputNumber),
+    attr: {
+      placeholder: '请输入年龄'
+    },
+    // schema 级规则
+    rules: [
+      { type: 'number', min: 18, message: '必须年满18岁（schema级）', trigger: 'change' }
+    ]
+  },
+  {
+    prop: 'email',
+    label: '邮箱',
+    is: markRaw(ElInput),
+    attr: {
+      placeholder: '请输入邮箱'
+    }
+  }
+]

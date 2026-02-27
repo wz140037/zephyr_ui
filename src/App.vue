@@ -1,30 +1,26 @@
 <script setup lang="ts">
-import { onMounted, useTemplateRef } from 'vue';
+import { ref } from 'vue'
 import { ZephyrForm } from '../packages/form'
-import { mockData } from './config/mock';
+import { formItems, formRules } from './config/mock'
+import { ElButton } from 'element-plus'
 
-const zephyrFormRef = useTemplateRef<InstanceType<typeof ZephyrForm>>('zephyrForm')
+const formRef = ref()
 
-onMounted(() => {
-  zephyrFormRef.value?.setDefaultValues({
-    // 是否感兴趣
-    isInterested: true,
-  })
-})
-
+async function submit() {
+  try {
+    const values = await formRef.value.getValues({ required: true })
+    console.log('校验通过：', values)
+  } catch (err) {
+    console.log('校验失败')
+  }
+}
 </script>
 
 <template>
-  <div class="demo-container">
-    <ZephyrForm :virtual="true" ref="zephyrForm" :form-items="mockData" />
+  <div :style="{ width: '600px', height: '500px' }">
+    <ZephyrForm ref="formRef" :formItems="formItems" :rules="formRules" />
   </div>
+  <ElButton type="primary" @click="submit">
+    提交
+  </ElButton>
 </template>
-<style scoped>
-.demo-container {
-  width: 400px;
-  height: 600px;
-  background-color: #f5f5f5;
-  margin: 10px auto;
-  padding: 10px;
-}
-</style>
