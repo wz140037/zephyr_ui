@@ -181,48 +181,81 @@ export const mockData: ZephyrFormSchema[] = [
 ]
 
 export const formRules = {
-  name: [
-    { required: true, message: '姓名为必填项（form级）', trigger: 'change' }
+  username: [
+    { required: true, message: '用户名必填（form级 blur）', trigger: 'blur' }
   ],
-  age: [
-    { type: 'number', required: true, message: '年龄必须填写（form级）', trigger: 'change' }
+
+  password: [
+    { required: true, message: '密码必填（form级 change）', trigger: 'change' }
   ],
+
   email: [
-    { type: 'email', message: '邮箱格式不正确（form级）', trigger: 'change' }
+    { type: 'email', message: '邮箱格式错误（form级 blur）', trigger: 'blur' }
+  ],
+
+  customField: [
+    { required: true, message: '必须触发 delete 才校验', trigger: 'delete' }
   ]
 }
 
 export const formItems = [
+  // 1️⃣ blur 测试
   {
-    prop: 'name',
-    label: '姓名',
+    prop: 'username',
+    label: '用户名（blur触发）',
     is: markRaw(ElInput),
     attr: {
-      placeholder: '请输入姓名',
-      // attr 级规则
+      placeholder: '失焦时校验',
       rules: [
-        { min: 2, message: '姓名至少2个字（attr级）', trigger: 'change' }
+        { min: 3, message: '至少3个字符（attr级 blur）', trigger: 'blur' }
       ]
     }
   },
+
+  // 2️⃣ change 测试
   {
-    prop: 'age',
-    label: '年龄',
-    is: markRaw(ElInputNumber),
-    attr: {
-      placeholder: '请输入年龄'
-    },
-    // schema 级规则
+    prop: 'password',
+    label: '密码（change触发）',
+    is: markRaw(ElInput),
     rules: [
-      { type: 'number', min: 18, message: '必须年满18岁（schema级）', trigger: 'change' }
-    ]
+      { min: 6, message: '至少6位（schema级 change）', trigger: 'change' }
+    ],
+    attr: {
+      placeholder: '输入时 change 校验'
+    }
   },
+
+  // 3️⃣ 多 trigger 数组测试
   {
     prop: 'email',
-    label: '邮箱',
+    label: '邮箱（blur + change）',
     is: markRaw(ElInput),
+    rules: [
+      {
+        required: true,
+        message: '邮箱必填（数组触发）',
+        trigger: ['blur', 'change']
+      }
+    ],
     attr: {
-      placeholder: '请输入邮箱'
+      placeholder: 'blur 和 change 都会校验'
     }
-  }
+  },
+
+  // 4️⃣ input 触发测试
+  {
+    prop: 'nickname',
+    label: '昵称（input触发）',
+    is: markRaw(ElInput),
+    rules: [
+      {
+        min: 2,
+        message: '至少2个字（input触发）',
+        trigger: 'input'
+      }
+    ],
+    attr: {
+      placeholder: '每次输入都会校验'
+    }
+  },
 ]
